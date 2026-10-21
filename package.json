@@ -4,7 +4,9 @@
   "private": false,
   "description": "A portable editorial theme for Kujo CMS.",
   "license": "MIT",
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.23.4 <23 || >=24.22.1 <25 || >=26.12.1"
+  },
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
