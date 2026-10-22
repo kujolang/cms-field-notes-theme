@@ -6,7 +6,7 @@ Field Notes is the default editorial theme bundled with the Kujo CMS showcase. I
 
 ```bash
 cp .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
@@ -26,3 +26,7 @@ CMS_API_TOKEN=... bash /path/to/cms/scripts/cms-extensions.sh theme:install-zip 
 Administrators can also upload the same ZIP from **CMS Studio → Themes & plugins**. The installer checks archive paths, size, expanded size, file count, manifest integrity, and schema before registration.
 
 Theme activation selects the presentation package. A hosted installation can connect that lifecycle to its deployment adapter while self-hosted teams retain control of their build environment.
+
+## Verification
+
+Use Node.js 22.23.4+, 24.22.1+, or 26.12.1+ within the supported release lines. Run `npm test` before packaging. The package includes its lockfile and reviewed private Braces depth guard; see `vendor/braces/SECURITY-PATCH.md`. The dependency regression tests remain enabled alongside lint, build, and audit checks.
