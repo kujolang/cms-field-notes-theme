@@ -1,5 +1,9 @@
 # Field Notes for Kujo CMS
 
+[![Version](https://img.shields.io/badge/version-1.0.3-black)](https://github.com/kujolang/cms-field-notes-theme)
+[![License](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+[![built for Kujo](https://img.shields.io/badge/built%20for-Kujo-white.svg)](https://github.com/kujolang/kujo)
+
 Field Notes is the default editorial theme bundled with the Kujo CMS showcase. It lives here as an independent, forkable project so creators can copy it, remix it, ship client variants, and distribute installable ZIP packages without carrying the administration application with it.
 
 ## Try it
