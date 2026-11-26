@@ -1,5 +1,6 @@
 "use client";
 
+import { linkTarget } from "../lib/presentation-url";
 import { Fragment, useState, type ReactNode } from "react";
 import { IconCheck, IconCopy } from "@tabler/icons-react";
 
@@ -10,7 +11,10 @@ function inline(text: string): ReactNode[] {
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
     if (part.startsWith("_") && part.endsWith("_")) return <em key={index}>{part.slice(1, -1)}</em>;
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (link) return <a key={index} href={link[2]}>{link[1]}</a>;
+    if (link) {
+      const target = linkTarget(link[2]);
+      return target ? <a key={index} href={target}>{link[1]}</a> : <Fragment key={index}>{link[1]}</Fragment>;
+    }
     return <Fragment key={index}>{part}</Fragment>;
   });
 }

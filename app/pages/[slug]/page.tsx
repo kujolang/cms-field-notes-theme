@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element */
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { getEntryMeta, getEntrySeo, getPage } from "../../../lib/cms";
 import MarkdownContent from "../../MarkdownContent";
 import SiteFooter from "../../SiteFooter";
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function EditorialPage({ params }: PageProps) {
   const page = await getPage((await params).slug);
-  if (!page) return <main className="narrow-page"><a className="back-link" href="/">← Field Notes</a><h1>Page not found.</h1></main>;
+  if (!page) notFound();
   const meta = getEntryMeta(page);
   const coverImage = typeof meta.cover_image === "string" ? meta.cover_image : "/images/field-notes-hero.webp";
 

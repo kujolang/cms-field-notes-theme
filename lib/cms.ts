@@ -1,5 +1,6 @@
-export const CMS_BASE_URL =
-  process.env.CMS_BASE_URL ?? "http://127.0.0.1:4200";
+import { cache } from "react";
+
+const MAX_CMS_JSON = 32 * 1024 * 1024;
 
 type CmsEnvelope<T> = {
   ok: boolean;
@@ -49,59 +50,91 @@ export type CmsTaxonomy = {
   description: string;
 };
 
+class CmsHttpError extends Error {
+  readonly status: number;
+
+  constructor(status: number) {
+    super(`CMS request failed with ${status}`);
+    this.status = status;
+  }
+}
+
+async function readJson<T>(response: Response): Promise<T> {
+  const length = response.headers.get("content-length");
+  if (length !== null && Number(length) > MAX_CMS_JSON) {
+    void response.body?.cancel().catch(() => {});
+    throw new Error("CMS response exceeds the 32 MiB size limit.");
+  }
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("CMS returned an empty response.");
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const parts: string[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_CMS_JSON) throw new Error("CMS response exceeds the 32 MiB size limit.");
+      parts.push(decoder.decode(value, { stream: true }));
+    }
+    parts.push(decoder.decode());
+  } catch (error) {
+    void reader.cancel().catch(() => {});
+    throw error;
+  } finally {
+    reader.releaseLock();
+  }
+  return JSON.parse(parts.join("")) as T;
+}
+
 async function cmsGet<T>(path: string): Promise<T> {
-  const response = await fetch(new URL(path, CMS_BASE_URL), {
+  const base = new URL(process.env.CMS_BASE_URL ?? "http://127.0.0.1:4200");
+  const url = new URL(path, base);
+  if (!["http:", "https:"].includes(base.protocol) || base.username || base.password || url.origin !== base.origin) {
+    throw new Error("CMS_BASE_URL must be an HTTP(S) endpoint without URL credentials.");
+  }
+  const response = await fetch(url, {
     cache: "no-store",
+    redirect: "manual",
+    signal: AbortSignal.timeout(15_000),
     headers: { Accept: "application/json" },
   });
-
   if (!response.ok) {
-    throw new Error(`CMS request failed with ${response.status}`);
+    void response.body?.cancel().catch(() => {});
+    throw new CmsHttpError(response.status);
   }
-
-  const payload = (await response.json()) as CmsEnvelope<T>;
-  if (!payload.ok) throw new Error("CMS returned an unsuccessful response");
+  const payload = await readJson<CmsEnvelope<T>>(response);
+  if (!payload?.ok || payload.data === undefined) throw new Error("CMS returned an unsuccessful response");
   return payload.data;
 }
 
-export function getArticles() {
+export const getArticles = cache(function getArticles() {
   return cmsGet<CmsList<CmsEntry>>(
     "/v1/entries?content_type=article&include=terms&sort_by=published_at&sort_dir=desc",
   );
-}
+});
 
-export function getPages() {
-  return cmsGet<CmsList<CmsEntry>>(
-    "/v1/entries?content_type=page&sort_by=title&sort_dir=asc",
-  );
-}
+export const getPages = cache(function getPages() {
+  return cmsGet<CmsList<CmsEntry>>("/v1/entries?content_type=page&sort_by=title&sort_dir=asc");
+});
 
-export async function getArticle(slug: string) {
+async function getEntry(type: "article" | "page", slug: string) {
   try {
-    return await cmsGet<CmsEntry>(
-      `/v1/entries/by-slug/article/${encodeURIComponent(slug)}`,
-    );
+    return await cmsGet<CmsEntry>(`/v1/entries/by-slug/${type}/${encodeURIComponent(slug)}`);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("404")) return null;
+    if (error instanceof CmsHttpError && error.status === 404) return null;
     throw error;
   }
 }
 
-export async function getPage(slug: string) {
-  try {
-    return await cmsGet<CmsEntry>(
-      `/v1/entries/by-slug/page/${encodeURIComponent(slug)}`,
-    );
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("404")) return null;
-    throw error;
-  }
-}
+export const getArticle = cache((slug: string) => getEntry("article", slug));
+export const getPage = cache((slug: string) => getEntry("page", slug));
 
 export function getEntryMeta(entry: CmsEntry): Record<string, unknown> {
   try {
     const value = JSON.parse(entry.meta_json || "{}");
-    return value && typeof value === "object" ? value : {};
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   } catch {
     return {};
   }

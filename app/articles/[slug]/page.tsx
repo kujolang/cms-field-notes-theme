@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages, @next/next/no-img-element */
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { formatCmsDate, getArticle, getEntryMeta, getEntrySeo } from "../../../lib/cms";
 import { NewsletterBox, ShareLinks } from "../../ArticleExtras";
 import MarkdownContent from "../../MarkdownContent";
@@ -27,14 +28,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article = await getArticle(slug);
 
-  if (!article) {
-    return (
-      <main className="narrow-page">
-        <a className="back-link" href="/">← Field Notes</a>
-        <h1>Article not found.</h1>
-      </main>
-    );
-  }
+  if (!article) notFound();
 
   const meta = getEntryMeta(article);
   const coverImage = typeof meta.cover_image === "string" ? meta.cover_image : "/images/clarity-context-control.webp";
