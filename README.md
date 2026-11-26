@@ -14,7 +14,7 @@ npm ci
 npm run dev
 ```
 
-The theme reads published content from `CMS_BASE_URL`. Start Kujo CMS on `http://127.0.0.1:4200`, or point the environment variable at another instance.
+The theme reads published content from `CMS_BASE_URL`. Start Kujo CMS on `http://127.0.0.1:4200`, or point the variable at another instance. Use an ignored `.env` or `.dev.vars` in development. Configure `CMS_BASE_URL` and `SITE_URL` as runtime variables for the deployed theme.
 
 ## Make it yours
 
@@ -27,10 +27,10 @@ npm run package
 CMS_API_TOKEN=... bash /path/to/cms/scripts/cms-extensions.sh theme:install-zip dist/cms-field-notes-theme.zip active
 ```
 
-Administrators can also upload the same ZIP from **CMS Studio → Themes & plugins**. The installer checks archive paths, size, expanded size, file count, manifest integrity, and schema before registration.
+The package command produces a reproducible ZIP from the theme source and lockfile. Administrators can also upload the same ZIP from **CMS Studio → Themes & plugins**. The installer checks archive paths, size, expanded size, file count, manifest integrity, and schema before registration.
 
 Theme activation selects the presentation package. A hosted installation can connect that lifecycle to its deployment adapter while self-hosted teams retain control of their build environment.
 
 ## Verification
 
-Use Node.js 22.23.4+, 24.22.1+, or 26.12.1+ within the supported release lines. Run `npm test` before packaging. The package includes its lockfile and reviewed private Braces depth guard; see `vendor/braces/SECURITY-PATCH.md`. The dependency regression tests remain enabled alongside lint, build, and audit checks.
+Use Node.js 22.23.5+, 24.22.3+, or 26.13.1+ within the supported release lines. Run `npm test` before packaging. The package includes its lockfile and reviewed private Braces depth guard; see `vendor/braces/SECURITY-PATCH.md`. The dependency regression tests remain enabled alongside lint, type checking, build, and audit checks.
